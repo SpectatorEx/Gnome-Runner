@@ -4,10 +4,9 @@
 #include <genesis.h>
 
 typedef struct Entity {
-    Vect2D_s16 pos;
-    u16 width, height;
+    Box pos;
+    s16 speed;
     u16 chance;
-    u16 speed;
     bool alive;
     Sprite *sprite;
 
@@ -15,8 +14,8 @@ typedef struct Entity {
     void (*reset) (struct Entity *ent);   
 } Entity;
 
-Entity BIRD_init(const SpriteDefinition *spriteDef, Vect2D_s16 pos, u16 speed, u16 chance);
-Entity ENEMY_init(const SpriteDefinition *spriteDef, Vect2D_s16 pos, u16 speed, u16 chance);
-Entity OBSTACLE_init(const SpriteDefinition *spriteDef, Vect2D_s16 pos, u16 speed, u16 chance);
+Entity BIRD_init(const SpriteDefinition *spriteDef, s16 speed, u16 chance);
+Entity ENEMY_init(const SpriteDefinition *spriteDef, s16 speed, u16 chance);
+Entity OBSTACLE_init(const SpriteDefinition *spriteDef, s16 speed, u16 chance);
 
 #endif

@@ -9,7 +9,7 @@
 JoyType joy;
 StateManager stateManager;
 
-Timer scoreTimer, textTimer;
+Timer timers[2];
 
 u16 vramIndex;
 u16 paletteAll[64];
@@ -35,17 +35,17 @@ int main(bool reset) {
     STATE_MANAGER_init(&stateManager, 2);
     STATE_MANAGER_push(&stateManager, &stateMenu);
 
-    textTimer = TIMER_init(0, 50);
-    scoreTimer = TIMER_init(0, 10);
+    timers[0] = (Timer) { 0, 50 };  // Text delay.
+    timers[1] = (Timer) { 0, 10 };  // Score delay.
 
     while (TRUE) {
-        handleInput();
         STATE_MANAGER_update(&stateManager);
+        handleInput();
 
         if (!reset) {
-            textTimer.tick = 0, scoreTimer.tick = 0;
-            score = 0;
+            TIMER_reset(timers, 2);
 
+            score = 0;
             reset = TRUE;
         }
 

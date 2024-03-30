@@ -1,38 +1,35 @@
+#include "level.h"
 #include "entities/entity.h"
 
-static void OBSTACLE_draw(Entity *obst);
-static void OBSTACLE_reset(Entity *obst);
+static void OBSTACLE_draw(Entity *ent);
+static void OBSTACLE_reset(Entity *ent);
 
-Entity OBSTACLE_init(const SpriteDefinition *spriteDef, Vect2D_s16 pos, u16 speed, u16 chance) {
-    Entity obst = { 
-        .pos = pos,
-        .width = spriteDef->w,
-        .height = spriteDef->h,
-        .speed = speed,
-        .chance = chance, 
-        .alive = FALSE,
-        .draw = &OBSTACLE_draw,
-        .reset = &OBSTACLE_reset,
-        .sprite = SPR_addSprite(spriteDef, pos.x, pos.y, TILE_ATTR(PAL1, 0, 0, 0)),
+Entity OBSTACLE_init(const SpriteDefinition *spriteDef, s16 speed, u16 chance) {
+    Entity ent = {
+        { screenWidth, GROUND_Y - 16, spriteDef->w, spriteDef->h },
+        speed, chance, FALSE, .draw = &OBSTACLE_draw, .reset = &OBSTACLE_reset
     };
 
-    return obst;
+    ent.sprite = SPR_addSprite(spriteDef, ent.pos.x, ent.pos.y, 
+        TILE_ATTR(PAL1, 0, 0, 0));
+
+    return ent;
 }
 
-static void OBSTACLE_draw(Entity *obst) {
-    obst->pos.x -= obst->speed;  
+static void OBSTACLE_draw(Entity *ent) {
+    ent->pos.x -= ent->speed;  
 
-    if (obst->pos.x <= -obst->width) {
-        obst->reset(obst);
+    if (ent->pos.x <= -ent->pos.w) {
+        ent->reset(ent);
         return;
     }
 
-    SPR_setPosition(obst->sprite, obst->pos.x, obst->pos.y);
+    SPR_setPosition(ent->sprite, ent->pos.x, ent->pos.y);
 }
 
-static void OBSTACLE_reset(Entity *obst) {
-    obst->pos.x = screenWidth;
-    obst->alive = FALSE;
+static void OBSTACLE_reset(Entity *ent) {
+    ent->pos.x = screenWidth;
+    ent->alive = FALSE;
 
-    SPR_setPosition(obst->sprite, obst->pos.x, obst->pos.y);
+    SPR_setPosition(ent->sprite, ent->pos.x, ent->pos.y);
 }

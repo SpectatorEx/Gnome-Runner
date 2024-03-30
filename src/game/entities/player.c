@@ -5,28 +5,26 @@
 
 extern JoyType joy;
 
-static void PLAYER_handleInput(Player *ply);
+static void PLAYER_input(Player *ply);
 
 Player PLAYER_init(f16 x, f16 y, f16 jumpForce, const SpriteDefinition *spriteDef) {
-    Player newPlayer = { 
-        .pos = { x, y },
-        .width = spriteDef->w, 
-        .height = spriteDef->h,
-        .jumpForce = jumpForce,
-        .alive = TRUE,
-        .sprite = SPR_addSprite(spriteDef, fix16ToInt(x), fix16ToInt(y), 
-                                TILE_ATTR(PAL2, 0, 0, 0))
+    Player ply = { 
+        { x, y }, spriteDef->w, spriteDef->h, 
+        0, 0, jumpForce, TRUE, FALSE, NULL
     };
 
-    return newPlayer;
+    ply.sprite = SPR_addSprite(spriteDef, fix16ToInt(x), fix16ToInt(y), 
+        TILE_ATTR(PAL2, 0, 0, 0));
+
+    return ply;
 }
 
 void PLAYER_draw(Player *ply) {
-    PLAYER_handleInput(ply);
-    
+    PLAYER_input(ply);
+
     if (ply->jumping) {
-        ply->pos.y = fix16Sub(ply->pos.y, ply->velocity);
-        ply->velocity = fix16Sub(ply->velocity, GRAVITY);
+        ply->pos.y -= ply->velocity;
+        ply->velocity -= FIX16(0.3);
 
         if (fix16ToInt(ply->pos.y) + ply->height >= GROUND_Y) {
             ply->velocity = FIX16(0);
@@ -41,29 +39,34 @@ void PLAYER_draw(Player *ply) {
     SPR_setPosition(ply->sprite, fix16ToInt(ply->pos.x), fix16ToInt(ply->pos.y));   
 }
 
-bool PLAYER_collideEntity(Player *ply, Entity *ent) {
+void PLAYER_reset(Player *ply) {
+    ply->pos.x = FIX16(-16);
+    ply->pos.y = FIX16(GROUND_Y - 16);
+
+    ply->alive = TRUE, ply->jumping = FALSE;
+}
+
+bool PLAYER_collide(Player *ply, Box *pos) {
     s16 destPosX = fix16ToInt(ply->pos.x);
     s16 destPosY = fix16ToInt(ply->pos.y) + ply->crouch;
 
-    if (destPosX < ent->pos.x + ent->width - 5
-        && destPosX + ply->width - 5 > ent->pos.x
-        && destPosY < ent->pos.y + ent->height - 2
-        && destPosY + ply->height - 5 > ent->pos.y)
-    {
+    if (destPosX < pos->x + pos->w - 5
+        && destPosX + ply->width - 5 > pos->x
+        && destPosY < pos->y + pos->h - 2
+        && destPosY + ply->height - 5 > pos->y) {
+
         return TRUE;
     }
 
     return FALSE;
 }
 
-static void PLAYER_handleInput(Player *ply) {
+static void PLAYER_input(Player *ply) {
     if ((joy.value & BUTTON_LEFT) && ply->pos.x > FIX16(0)) {
-        ply->pos.x = fix16Sub(ply->pos.x, FIX16(1));
-
+        ply->pos.x -= FIX16(1);
     } else if ((joy.value & BUTTON_RIGHT) 
         && ply->pos.x < FIX16(screenWidth - ply->width)) {
-
-        ply->pos.x = fix16Add(ply->pos.x, FIX16(1));
+        ply->pos.x += FIX16(1);
     }
 
     if (JOY_INPUT(joy, BUTTON_A) && !ply->jumping) {

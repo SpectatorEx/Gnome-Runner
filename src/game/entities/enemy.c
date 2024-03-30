@@ -2,42 +2,38 @@
 
 static u16 offset;
 
-static void ENEMY_draw(Entity *enemy);
-static void ENEMY_reset(Entity *enemy);
+static void ENEMY_draw(Entity *ent);
+static void ENEMY_reset(Entity *ent);
 
-Entity ENEMY_init(const SpriteDefinition *spriteDef, Vect2D_s16 pos, u16 speed, u16 chance) {
-    Entity enemy = {
-        .pos = pos,
-        .width = spriteDef->w,
-        .height = spriteDef->h,
-        .speed = speed,
-        .chance = chance,
-        .alive = FALSE,
-        .draw = &ENEMY_draw,
-        .reset = &ENEMY_reset,
-        .sprite = SPR_addSprite(spriteDef, pos.x, pos.y, TILE_ATTR(PAL3, 0, 0, 0)),
+Entity ENEMY_init(const SpriteDefinition *spriteDef, s16 speed, u16 chance) {
+    Entity ent = {
+        { screenWidth, 0, spriteDef->w, spriteDef->h },
+        speed, chance, FALSE, .draw = &ENEMY_draw, .reset = &ENEMY_reset
     };
 
-    return enemy;
+    ent.sprite = SPR_addSprite(spriteDef, ent.pos.x, ent.pos.y, 
+        TILE_ATTR(PAL3, 0, 0, 0));
+
+    return ent;
 }
 
-static void ENEMY_draw(Entity *enemy) {
-    enemy->pos.x -= enemy->speed;
-    enemy->pos.y = sinFix16(enemy->pos.x * 4 + offset) / 4 + 130;
+static void ENEMY_draw(Entity *ent) {
+    ent->pos.x -= ent->speed;
+    ent->pos.y = sinFix16(ent->pos.x * 4 + offset) / 4 + 130;
 
-    if (enemy->pos.x <= -enemy->width) {
-        enemy->reset(enemy);
+    if (ent->pos.x <= -ent->pos.w) {
+        ent->reset(ent);
         return;       
     }
 
-    SPR_setPosition(enemy->sprite, enemy->pos.x, enemy->pos.y);
+    SPR_setPosition(ent->sprite, ent->pos.x, ent->pos.y);
 }
 
-static void ENEMY_reset(Entity *enemy) {
-    enemy->pos.x = screenWidth;
-    enemy->alive = FALSE;
+static void ENEMY_reset(Entity *ent) {
+    ent->pos.x = screenWidth;
+    ent->alive = FALSE;
 
     offset += 256;
 
-    SPR_setPosition(enemy->sprite, enemy->pos.x, enemy->pos.y); 
+    SPR_setPosition(ent->sprite, ent->pos.x, ent->pos.y); 
 }

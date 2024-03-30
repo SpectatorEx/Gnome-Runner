@@ -1,22 +1,18 @@
 #include "engine/timer.h"
 
-Timer TIMER_init(u32 minTick, u32 maxTick) {
-    Timer newTimer = { 0, minTick, maxTick, FALSE };
-
-    if (minTick >= maxTick || maxTick <= minTick) {
-        newTimer.minTick = 0;
-        newTimer.maxTick = 0;
-
-        newTimer.infinite = TRUE;
-    }
-
-    return newTimer;
-}
-
-void TIMER_update(Timer *timer) {
+bool TIMER_update(Timer *timer) {
     timer->tick++;
 
-    if (!timer->infinite && timer->tick == timer->maxTick) {
+    if (timer->tick == timer->maxTick) {
         timer->tick = 0;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+void TIMER_reset(Timer *timer, u16 amount) {
+    for (u16 i = 0; i < amount; i++) {
+        timer[i].tick = 0;
     }
 }

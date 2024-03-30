@@ -2,11 +2,9 @@
 #define _LEVEL_H_
 
 #define GROUND_Y 160
-#define SCROLL_SPEED 2
-#define GRAVITY FIX16(0.3)
 
 typedef enum {
-    BACKGROUND,
+    BG,
     GROUND, 
     GROUND_GRASS,
     GRASS,
@@ -15,5 +13,6 @@ typedef enum {
 } TileSetName;
 
 void LEVEL_init(void);
+void LEVEL_draw(void);
 
 #endif

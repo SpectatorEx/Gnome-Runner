@@ -1,7 +1,7 @@
 #include "engine/entity_manager.h"
 
 static void ENTITY_MANAGER_spawn(EntityManager *manager);
-extern u16 getRandomRange(u16 min, u16 max);
+extern u16 getRandRange(u16 min, u16 max);
 
 EntityManager ENTITY_MANAGER_init (Entity *ents, u16 entLength) {
     EntityManager newManager = { NULL, NULL, entLength, 0 };
@@ -17,7 +17,7 @@ EntityManager ENTITY_MANAGER_init (Entity *ents, u16 entLength) {
 void ENTITY_MANAGER_update(EntityManager *manager) {
     ENTITY_MANAGER_spawn(manager);
 
-    for (u16 i = 0; i < manager->entLength; i++) {
+    for (u16 i = 0; i < manager->entCount; i++) {
         Entity *ent = &manager->ents[i];
 
         if (ent->alive) { 
@@ -26,8 +26,8 @@ void ENTITY_MANAGER_update(EntityManager *manager) {
     }
 }
 
-void ENTITY_MANAGER_respawn(EntityManager *manager) {
-    for (u16 i = 0; i < manager->entLength; i++) {
+void ENTITY_MANAGER_reset(EntityManager *manager) {
+    for (u16 i = 0; i < manager->entCount; i++) {
         Entity *ent = &manager->ents[i];
         ent->reset(ent);
     }
@@ -41,16 +41,16 @@ static void ENTITY_MANAGER_spawn(EntityManager *manager) {
         return;
     }
 
-    u16 chance = getRandomRange(1, 100);
+    u16 chance = getRandRange(1, 100);
 
-    for (u16 i = 0; i < manager->entLength; i++) {
+    for (u16 i = 0; i < manager->entCount; i++) {
         Entity *ent = &manager->ents[i];
 
         if (!ent->alive && chance <= ent->chance) {
             ent->alive = TRUE;
 
             manager->lastEnt = ent;
-            manager->distance = getRandomRange(screenWidth / 2, screenWidth - 96);
+            manager->distance = getRandRange(screenWidth / 2, screenWidth - 96);
 
             break;
         }

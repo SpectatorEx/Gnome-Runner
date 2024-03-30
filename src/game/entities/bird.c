@@ -1,51 +1,45 @@
 #include "level.h"
 #include "entities/entity.h"
 
-static void BIRD_draw(Entity *bird);
-static void BIRD_reset(Entity *bird);
+static void BIRD_draw(Entity *ent);
+static void BIRD_reset(Entity *ent);
 
-static u16 BIRD_getRandomPosY(void);
+static s16 BIRD_getRandPosY(void);
 
-Entity BIRD_init(const SpriteDefinition *spriteDef, Vect2D_s16 pos, u16 speed, u16 chance) {
-    Entity bird = { 
-        .pos = pos,
-        .width = spriteDef->w,
-        .height = spriteDef->h,
-        .speed = speed,
-        .chance = chance, 
-        .alive = FALSE,
-        .draw = &BIRD_draw,
-        .reset = &BIRD_reset,
-        .sprite = SPR_addSprite(spriteDef, pos.x, pos.y, TILE_ATTR(PAL3, 0, 0, 0)),
+Entity BIRD_init(const SpriteDefinition *spriteDef, s16 speed, u16 chance) {
+    Entity ent = { 
+        { screenWidth, BIRD_getRandPosY(), spriteDef->w, spriteDef->h },
+        speed, chance, FALSE, .draw = &BIRD_draw, .reset = &BIRD_reset
     };
 
-    bird.pos.y = BIRD_getRandomPosY();
+    ent.sprite = SPR_addSprite(spriteDef, ent.pos.x, ent.pos.y, 
+        TILE_ATTR(PAL3, 0, 0, 0));
 
-    return bird;
+    return ent;
 }
 
-static void BIRD_draw(Entity *bird) {
-    bird->pos.x -= bird->speed;
+static void BIRD_draw(Entity *ent) {
+    ent->pos.x -= ent->speed;
 
-    if (bird->pos.x <= -bird->width) {
-        bird->reset(bird);
+    if (ent->pos.x <= -ent->pos.w) {
+        ent->reset(ent);
         return;
     }
 
-    SPR_setPosition(bird->sprite, bird->pos.x, bird->pos.y);
+    SPR_setPosition(ent->sprite, ent->pos.x, ent->pos.y);
 }
 
-static void BIRD_reset(Entity *bird) {
-    bird->pos.x = screenWidth;
-    bird->pos.y = BIRD_getRandomPosY();
+static void BIRD_reset(Entity *ent) {
+    ent->pos.x = screenWidth;
+    ent->pos.y = BIRD_getRandPosY();
 
-    bird->alive = FALSE;
+    ent->alive = FALSE;
 
-    SPR_setPosition(bird->sprite, bird->pos.x, bird->pos.y);
+    SPR_setPosition(ent->sprite, ent->pos.x, ent->pos.y);
 }
 
-static u16 BIRD_getRandomPosY(void) {
-    u16 spawnPos[] = { GROUND_Y - 24, GROUND_Y - 16 };
+static s16 BIRD_getRandPosY(void) {
+    s16 spawnPos[] = { GROUND_Y - 24, GROUND_Y - 16 };
     u16 index = random() % 2;
 
     return spawnPos[index];

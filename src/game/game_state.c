@@ -20,14 +20,14 @@ EntityManager entManager;
 
 u32 score, highScore;
 
-static bool preStart, isEndGame;
+static bool preStart, endGame;
 static Player ply;
 
 extern StateManager stateManager;
 extern State stateMenu;
 
 extern JoyType joy;
-extern Timer scoreTimer, textTimer;
+extern Timer timers[2];
 
 extern u16 paletteAll[64];
 
@@ -55,31 +55,37 @@ void initGameStates(void) {
 
 static void gameInit(void) {
     /* Basic init. */
+
     preStart = TRUE;
+    score = 0;
 
     VDP_setPlaneSize(32, 32, TRUE);
     GS_initScrollTiles();
 
     /* Init sounds. */
+
     XGM_setPCM(64, sfx_player_jump, sizeof(sfx_player_jump));
     XGM_setPCM(65, sfx_player_hurt, sizeof(sfx_player_hurt));
     XGM_setPCM(66, sfx_win, sizeof(sfx_win));
 
-    /* Init level and draw interface. */
+    /* Init level and draw score. */
+
     LEVEL_init();
+    LEVEL_draw();
 
     randomSeason();
     displayScore();
 
     PAL_fadeInAll(paletteAll, 30, FALSE);
 
-    /* Init entities. */
+    /* Init ents. */
+
     Entity ents[4];
 
-    ents[0] = ENEMY_init(&bat_sprite, (Vect2D_s16) { screenWidth, 0 }, 3, 15);
-    ents[1] = BIRD_init(&eagle_sprite, (Vect2D_s16) { screenWidth, 0 }, 3, 30);
-    ents[2] = OBSTACLE_init(&rock_sprite, (Vect2D_s16) { screenWidth, GROUND_Y - 16 }, 2, 65);
-    ents[3] = OBSTACLE_init(&stump_sprite, (Vect2D_s16) { screenWidth, GROUND_Y - 16 }, 2, 100);
+    ents[0] = ENEMY_init(&bat_sprite, 3, 15);
+    ents[1] = BIRD_init(&eagle_sprite, 3, 30);
+    ents[2] = OBSTACLE_init(&rock_sprite, 2, 65);
+    ents[3] = OBSTACLE_init(&stump_sprite, 2, 100);
 
     ply = PLAYER_init(FIX16(-16), FIX16(GROUND_Y - 16), FIX16(3), &player_sprite);
     entManager = ENTITY_MANAGER_init(ents, 4);
@@ -88,7 +94,7 @@ static void gameInit(void) {
 static void gameUpdate(void) {
     if (preStart) {
         SPR_setAnim(ply.sprite, ANIM_RUN);
-        ply.pos.x = fix16Add(ply.pos.x, FIX16(1.5));
+        ply.pos.x += FIX16(1.5);
 
         if (ply.pos.x == FIX16(50)) {
             preStart = FALSE; 
@@ -101,13 +107,13 @@ static void gameUpdate(void) {
     }
 
     GS_tileScrolling();
-    
+
     PLAYER_draw(&ply);
     ENTITY_MANAGER_update(&entManager);
 
-    for (u16 i = 0; i < entManager.entLength; i++) {
+    for (u16 i = 0; i < entManager.entCount; i++) {
         Entity *ent = &entManager.ents[i];
-        bool collide = PLAYER_collideEntity(&ply, ent);
+        bool collide = PLAYER_collide(&ply, &ent->pos);
 
         if (collide) {
             XGM_startPlayPCM(65, 15, SOUND_PCM_CH2);
@@ -117,16 +123,16 @@ static void gameUpdate(void) {
         }
     }
 
-    if (scoreTimer.tick == scoreTimer.minTick) {
+    if (!timers[1].tick) {
         score++;
         displayScore();
     }
 
-    TIMER_update(&scoreTimer);
+    TIMER_update(&timers[1]);
     SPR_update();
 
-    if (JOY_INPUT(joy, BUTTON_START) || !ply.alive 
-        || score == MAX_SCORE) {
+    if (JOY_INPUT(joy, BUTTON_START)
+        || score == MAX_SCORE || !ply.alive) {
 
         STATE_MANAGER_push(&stateManager, &statePause);
     }
@@ -145,16 +151,13 @@ static void gameDestroy(void) {
 }
 
 static void gameRestart(void) {
-    ply.pos.x = FIX16(-16);
-    ply.pos.y = FIX16(GROUND_Y - 16);
-
-    preStart = TRUE, isEndGame = FALSE;
-    ply.alive = TRUE, ply.jumping = FALSE;
-
-    ENTITY_MANAGER_respawn(&entManager);
+    PLAYER_reset(&ply);
+    ENTITY_MANAGER_reset(&entManager);
 
     randomSeason();
     PAL_fadeInAll(paletteAll, 30, TRUE);
+
+    preStart = TRUE, endGame = FALSE;
 }
 
 static void displayScore(void) {
@@ -174,17 +177,22 @@ static void randomSeason(void) {
     u16 rnd = random() % 3;
 
     switch (rnd) {
-        case 0: // Summer
+        case 0: // Summer.
             GS_copyPalette(paletteAll, 0, 2, palette_summer_bg, 
-                            palette_summer_fg);
+                palette_summer_fg);
+
             break;
-        case 1: // Autumn
+
+        case 1: // Autumn.
             GS_copyPalette(paletteAll, 0, 2, palette_autumn_bg,
-                            palette_autumn_fg);
+                palette_autumn_fg);
+
             break;
-        case 2: // Winter
+
+        case 2: // Winter.
             GS_copyPalette(paletteAll, 0, 2, palette_winter_bg,
-                            palette_winter_fg);
+                palette_winter_fg);
+
             break;   
     }
 }
@@ -198,11 +206,9 @@ static void pauseInit(void) {
 
         if (score == MAX_SCORE) {
             XGM_startPlayPCM(66, 15, SOUND_PCM_CH2);
+            GS_drawTextCenter(BG_B, "You win!", 23);
 
-            GS_drawTextCenter(BG_B, "You got 99999 points!", 23);
-            GS_drawTextCenter(BG_B, "Return to menu?", 24);
-
-            isEndGame = TRUE;
+            endGame = TRUE;
         }
 
         score = 0;
@@ -216,11 +222,11 @@ static void pauseInit(void) {
 
 static void pauseUpdate(void) {
     if (!ply.alive) {
-        GS_drawBlinkText(&textTimer, BG_B, "GAME OVER. RETRY?", 12, 23);
+        GS_drawBlinkText(&timers[0], BG_B, "GAME OVER!", 15, 23);
     }
 
     if (JOY_INPUT(joy, BUTTON_START)) {
-        if (!ply.alive || isEndGame) {
+        if (!ply.alive || endGame) {
             gameRestart();
         }
 
@@ -239,7 +245,5 @@ static void pauseUpdate(void) {
 
 static void pauseDestroy(void) {
     VDP_clearTextAreaBG(BG_B, 10, 23, 25, 2);
-
-    textTimer.tick = 0;
-    scoreTimer.tick = 0;
+    TIMER_reset(timers, 2);
 }

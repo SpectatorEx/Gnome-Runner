@@ -9,9 +9,9 @@ const ROMHeader rom_header = {
 #else
     "SEGA MEGA DRIVE ",
 #endif
-    "(C)SGDK 2023    ",
-    "GNOME RUNNER                                  ",
-    "GNOME RUNNER                                  ",
+    "(C)SGDK 2024    ",
+    "GNOME RUNNER                                    ",
+    "GNOME RUNNER                                    ",
     "GM 00000000-00",
     0x000,
     "JD              ",

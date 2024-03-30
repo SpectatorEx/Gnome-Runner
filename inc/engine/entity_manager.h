@@ -6,12 +6,12 @@
 
 typedef struct {
     Entity *ents, *lastEnt;
-    u16 entLength, distance;
+    u16 entCount, distance;
 } EntityManager;
 
 EntityManager ENTITY_MANAGER_init(Entity *ents, u16 entLength);
 
 void ENTITY_MANAGER_update(EntityManager *inspector);
-void ENTITY_MANAGER_respawn(EntityManager *inspector);
+void ENTITY_MANAGER_reset(EntityManager *inspector);
 
 #endif
